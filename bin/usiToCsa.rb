@@ -438,7 +438,7 @@ class BridgeState
           @cp *= -1
         end
       elsif /(\s+|^)score\s+mate\s+(-?\d+)/ =~ str
-        @cp = ($2.to_i < 0 ? -100000 : 100000)
+        @cp = ($2.to_i < 0 ? -100000 : 100000) + $2.to_i　# ex. mate 5 --> 100005
         if !@side
           @cp *= -1
         end
