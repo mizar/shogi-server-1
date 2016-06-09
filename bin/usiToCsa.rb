@@ -72,6 +72,10 @@ OPTIONS
                 password for a CSA server
         ponder
                 enble ponder
+        info-ex
+                enable to send extra information to the server with principal validation.
+                Ex. depth 26 seldepth 29 time 242045 nodes 16518672 nps 68246...
+                (NOTE) This isn't officially approved.
         port
                 a port number to connect to a CSA server. 4081 is often used.
 
@@ -105,6 +109,7 @@ def parse_command_line
     ["--options",     GetoptLong::REQUIRED_ARGUMENT],
     ["--password",    GetoptLong::REQUIRED_ARGUMENT],
     ["--ponder",      GetoptLong::NO_ARGUMENT],
+    ["--info-ex",     GetoptLong::NO_ARGUMENT],
     ["--port",        GetoptLong::REQUIRED_ARGUMENT])
   parser.quiet = true
   begin
@@ -131,6 +136,7 @@ def parse_command_line
   options[:log_dir]     ||= ENV["LOG_DIR"] || "."
   options[:password]    ||= ENV["PASSWORD"]
   options[:ponder]      ||= ENV["PONDER"] || false
+  options[:info_ex]     ||= ENV["INFO_EX"] || false
   options[:port]        ||= ENV["PORT"] || 4081
   options[:port]        = options[:port].to_i
 
@@ -231,6 +237,7 @@ class BridgeState
     @cp          = nil
     @pv          = nil
     @ponder_move = nil
+    @info_ex     = ""
   end
 
   def next_turn
@@ -238,6 +245,7 @@ class BridgeState
     @cp         = nil
     @pv         = nil
     @ponder_move = nil
+    @info_ex    = ""
   end
 
   def update_last_server_send_time
@@ -443,8 +451,9 @@ class BridgeState
           @cp *= -1
         end
       end
-      if /(\s+|^)pv\s+(.*)$/ =~str
-        @pv = $2
+      if /(.*)(\s+|^)pv\s+(.*)$/ =~str
+        @info_ex = $1 if $options[:info_ex]
+        @pv = $3
       end
     end
   end
@@ -536,10 +545,14 @@ class BridgeState
       end
     end
     
+    if @info_ex != ""
+      @info_ex = " ' " + @info_ex
+    end
+
     if moves.empty?
-      return ""
+      return "'* #@cp#@info_ex"
     else
-      return "'* #@cp #{moves.join(" ")}"
+      return "'* #@cp #{moves.join(" ")}#@info_ex"
     end
   end
 end # class BridgeState
